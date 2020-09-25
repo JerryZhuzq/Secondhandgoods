@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>List of Goods</title>
+    <script src="/static/vue.js"></script>
+    <script src="/static/axios.min.js"></script>
+    <script src="/static/page.js"></script>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        #app {
+            padding: 15px;
+        }
+
+
+        .pagination {
+            list-style: none;
+        }
+
+        a {
+            text-decoration-line: none;
+        }
+
+        ul li {
+            display: inline-block;
+            border: 1px solid #c0c0c0;
+            text-align: center;
+            color: #269bef;
+            padding: 4px;
+        }
+
+        ul li a {
+            padding: 4px;
+        }
+
+        .pull-right {
+            margin-top: 20px;
+        }
+
+        .page-number {
+            width: 50px;
+        }
+
+        .active {
+            background-color: #269bef;
+            color: #FFFFFF;
+        }
+
+        .disabled {
+            border: 1px solid #C1C1C1;
+        }
+
+        .disabled a {
+            color: #C1C1C1 !important;
+        }
+
+        .container {
+            text-align: center;
+        }
+
+        .flex-space-around {
+            display: flex;
+            -webkit-flex-wrap: wrap;
+            flex-wrap: wrap;
+            margin: 20px 0px;
+        }
+
+        .card {
+            width: 300px;
+            border: 1px solid #c0c0c0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+             margin:10px 20px;
+            padding: 0px 5px;
+        }
+
+        .addBtn {
+            width: 80px;
+            height: 40px;
+            background: #3ca2ea;
+            border: none;
+            box-shadow: 2px 2px 5px #3ca2ea;
+            color: #fff;
+            cursor: pointer;
+        }
+        .card-content{
+            height: 100px;
+            overflow-y: scroll;
+        }
+    </style>
+</head>
+<body>
+{% verbatim %}
+<!-- 模板 -->
+<script type="text/template" id="template_pagination">
+    <nav>
+        <ul class="pagination">
+            <li :class="{'disabled': current == 1}"><a href="javascript:;" v-on:click="setCurrent(1)"> Home Page </a></li>
+            <li :class="{'disabled': current == 1}" style="margin-left: -6px;"><a href="javascript:;"
+                                                                                  v-on:click="setCurrent(current - 1)">
+                Prev Page </a></li>
+            <li v-for="p in grouplist" :class="{'active': current == p.val}"><a href="javascript:;" class="page-number"
+                                                                                v-on:click="setCurrent(p.val)"> {{
+                p.text }} </a></li>
+            <li :class="{'disabled': current == page}"><a href="javascript:;" v-on:click="setCurrent(current + 1)">
+                Next Page</a></li>
+            <li :class="{'disabled': current == page}" style="margin-left: -6px;"><a href="javascript:;"
+                                                                                     v-on:click="setCurrent(page)">
+                Last Page </a>
+            </li>
+        </ul>
+        <ul class="pagination pull-right">
+            <!-- <li><span> 共 {{ total }}  条数据 </span></li> -->
+            <!-- <li><span> 每页显示 {{ display }}  条数据 </span></li> -->
+            <li><span> Total of {{ page }} Page(s) </span></li>
+            <li><span> Current {{ current }} Page </span></li>
+        </ul>
+    </nav>
+</script>
+
+
+<div id="app">
+    <div>
+        <button class="addBtn" @click="onAdd">Post your Goods</button>
+    </div>
+    <div class="flex-space-around">
+        <div v-for="(item,index) in lists" :key="index">
+            <div class="card">
+                <img :src="item.fields.fileUrl" alt="" width="300" height="250">
+                <h3>{{ item.fields.title }}</h3>
+                <h4>${{ item.fields.price }}</h4>
+                <div class="card-content">{{ item.fields.content }}</div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="container">
+
+        <pagination :total="total" :current.sync="current" v-on:pagechange="pagechange"></pagination>
+
+    </div>
+
+</div>
+{% endverbatim %}
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                lists: [],
+                total: 20,     // 记录总条数
+                display: 10,   // 每页显示条数
+                current: 1     // 当前第n页 ， 也可以 watch current 的变化
+            }
+        },
+        methods: {
+            onAdd() {
+                window.location.href = "/add/"
+            },
+            getData() {
+                axios.post('/', {
+                    pageIndex: this.current,
+                    pageSize: this.display
+                })
+                    .then(res => {
+                        console.log(res.data)
+                        if (res.data.code == 2000) {
+                            this.lists = res.data.data
+                            this.total = res.data.count
+                        } else {
+                            alert(res.data.msg)
+
+                        }
+                    })
+                    .catch(function (error) { // 请求失败处理
+                        console.log(error);
+                    });
+            },
+            pagechange: function (p) {
+                this.current = p;// 页码改变event ， p 为新的 current
+                this.getData()
+            }
+        },
+        created() {
+            this.getData()
+        }
+    })
+</script>
+</body>
+</html>
